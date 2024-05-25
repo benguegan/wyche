@@ -18,11 +18,11 @@ public class ModeratorController {
     var spaceId = Long.parseLong(request.params(":spaceId"));
     var msgId = Long.parseLong(request.params(":msgId"));
 
-    database.updateUnique("delete from messages" +
-        "where space_id = ? and msg_id = ?",
+    database.updateUnique("delete from messages " +
+        "where space_id = ? AND msg_id = ?",
         spaceId, msgId);
 
     response.status(200);
     return new JSONObject();
-  };
+  }
 }

@@ -1,2 +1,7 @@
 docs/
 .vscode
+
+.idea/
+*.iml
+target/
+*.zip

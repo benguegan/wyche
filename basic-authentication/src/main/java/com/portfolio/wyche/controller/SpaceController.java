@@ -48,10 +48,6 @@ public class SpaceController {
     });
   }
 
-  /**
-   * {@literal @PostMapping}
-   * {@code /space/:id}
-   */
   public JSONObject postMessage(Request request, Response response) {
     var spaceId = Long.parseLong(request.params(":spaceId"));
     var json = new JSONObject(request.body());
@@ -78,41 +74,38 @@ public class SpaceController {
       response.header("Location", uri);
       return new JSONObject().put("uri", uri);
     });
-  };
+  }
 
   public Message readMessage(Request request, Response response) {
     var spaceId = Long.parseLong(request.params(":spaceId"));
     var msgId = Long.parseLong(request.params(":msgId"));
 
     var message = database.findUnique(Message.class,
-        "select space_id, msg_id, author, msg_time, msg_text" +
-            "from messages" +
-            "where msg_id = ? and space_id = ?",
+        "select space_id, msg_id, author, msg_time, msg_text " +
+            "from messages " +
+            "where msg_id = ? AND space_id = ?",
         msgId, spaceId);
 
     response.status(200);
     return message;
-  };
+  }
 
   public JSONArray findMessages(Request request, Response response) {
     var since = Instant.now().minus(1, ChronoUnit.DAYS);
     if (request.queryParams("since") != null) {
       since = Instant.parse(request.queryParams("since"));
     }
-
     var spaceId = Long.parseLong(request.params(":spaceId"));
 
     var messages = database.findAll(Long.class,
-        "select msg_id" +
-            "from messages" +
-            "where space_id = ? and msg_time >= ?;",
+        "select msg_id " +
+            "from messages " +
+            "where space_id = ? AND msg_time >= ?;",
         spaceId, since);
 
     response.status(200);
-    return new JSONArray(messages
-        .stream()
-        .map(msgId -> "/spaces/" + spaceId + "/messages/" +
-            msgId)
+    return new JSONArray(messages.stream()
+        .map(msgId -> "/spaces/" + spaceId + "/messages/" + msgId)
         .collect(Collectors.toList()));
   }
 
@@ -136,9 +129,9 @@ public class SpaceController {
     public String toString() {
       JSONObject msg = new JSONObject();
       msg.put("uri", "/spaces/" + spaceId + "/messages/" + msgId);
-      msg.put("uri", author);
-      msg.put("uri", time.toString());
-      msg.put("uri", message);
+      msg.put("author", author);
+      msg.put("time", time.toString());
+      msg.put("message", message);
 
       return msg.toString();
     }

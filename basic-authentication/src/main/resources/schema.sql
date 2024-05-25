@@ -35,7 +35,8 @@ create table audit_log(
 );
 create sequence audit_id_seq;
 
-drop table if exists permissions(
+drop table if exists permissions;
+create table permissions(
   space_id int not null references spaces(space_id), 
   user_id varchar(30) not null references users(user_id), 
   perms varchar(3) not null, 
