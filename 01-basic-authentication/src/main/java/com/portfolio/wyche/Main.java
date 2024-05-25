@@ -20,11 +20,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.common.util.concurrent.RateLimiter;
+import com.portfolio.wyche.controller.AuditController;
 import com.portfolio.wyche.controller.ModeratorController;
 import com.portfolio.wyche.controller.SpaceController;
+import com.portfolio.wyche.controller.UserController;
 
-import main.java.com.portfolio.wyche.controller.AuditController;
-import main.java.com.portfolio.wyche.controller.UserController;
 import spark.Request;
 import spark.Response;
 
@@ -47,11 +47,9 @@ public class Main {
 
         before((request, response) -> {
             if (!rateLimiter.tryAcquire()) {
-                {
-                    // http code used to indicate that rate-limiting has been applied and that the
-                    // client should try the request again later
-                    halt(429);
-                }
+                // http code used to indicate that rate-limiting has been applied and that the
+                // client should try the request again later
+                halt(429);
             }
         });
 
@@ -77,16 +75,16 @@ public class Main {
             response.header("Cache-Control", "no-store");
             // reduce the scope for XSS attacks by restricting where scripts can be loaded
             // from and what they can do
-            // `default-src 'none'`: prevents the response from loading any scripts or
-            // resources.
-            // `frame-ancestors 'none'`: replacement for X-Frame-Options, this prevents the
-            // response being loaded into an iframe.
-            // `sandbox n/a`: disables scripts and other potentially dangerous content from
-            // being executed
+            // - `default-src 'none'`: prevents the response from loading any scripts or
+            // resources
+            // - `frame-ancestors 'none'`: replacement for X-Frame-Options, this prevents
+            // the response being loaded into an iframe
+            // - `sandbox n/a`: disables scripts and other potentially dangerous content
+            // from being executed
             response.header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; sandbox");
             // remove server information leak (jetty webserver version)
             response.header("Server", "");
-            // Set to nosniff to prevent the browser guessing the correct Content-Type
+            // Set to `nosniff` to prevent the browser guessing the correct Content-Type
             // response.header("X-Content-Type-Options", "nosniff");
         }));
 
@@ -141,7 +139,7 @@ public class Main {
     }
 
     // remove the leak of the exception class details by changing the exception
-    // handler to only return the error message (details message from the
+    // handler to only return the error message (i.e., details message from the
     // exception), not the full class
     private static void badRequest(Exception ex, Request request, Response response) {
         response.status(400);
