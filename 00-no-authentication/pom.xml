@@ -6,10 +6,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.portfolio.wyche</groupId>
-  <artifactId>miscellaneous</artifactId>
+  <artifactId>00-no-authentication</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
-  <name>miscellaneous</name>
+  <name>00-no-authentication</name>
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 

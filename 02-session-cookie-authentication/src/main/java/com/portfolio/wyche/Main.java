@@ -10,6 +10,7 @@ import static spark.Spark.internalServerError;
 import static spark.Spark.notFound;
 import static spark.Spark.post;
 import static spark.Spark.secure;
+import static spark.Spark.staticFiles;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -28,9 +29,12 @@ import com.portfolio.wyche.controller.UserController;
 
 import spark.Request;
 import spark.Response;
+import spark.Spark;
 
 public class Main {
     public static void main(String[] args) throws Exception {
+        staticFiles.location("/public");
+
         // enable https
         secure("localhost.p12", "changeit", null, null);
 
@@ -41,9 +45,13 @@ public class Main {
         datasource = JdbcConnectionPool.create("jdbc:h2:mem:wyche", "api_user", "password");
         database = Database.forDataSource(datasource);
 
+        var spaceController = new SpaceController(database);
+        var moderatorController = new ModeratorController(database);
         var userController = new UserController(database);
         var auditController = new AuditController(database);
         var rateLimiter = RateLimiter.create(2.0d);
+        TokenStore tokenStore = new CookieTokenStore();
+        var tokenController = new TokenController(tokenStore);
 
         /* -------------------------------------------------------------------------- */
         /* filter */
@@ -101,16 +109,22 @@ public class Main {
         }));
 
         before(userController::authenticate);
+        before(tokenController::validateToken);
 
         // record access log
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
 
         /* -------------------------------------------------------------------------- */
+        /* session */
+        /* -------------------------------------------------------------------------- */
+        before("/sessions", userController::requireAuthentication);
+        post("/sessions", tokenController::login);
+        delete("/sessions", tokenController::logout);
+
+        /* -------------------------------------------------------------------------- */
         /* space controller */
         /* -------------------------------------------------------------------------- */
-        var spaceController = new SpaceController(database);
-
         before("/spaces", userController::requireAuthentication);
         post("/spaces", spaceController::createSpace);
 
@@ -129,8 +143,6 @@ public class Main {
         /* -------------------------------------------------------------------------- */
         /* moderator controller */
         /* -------------------------------------------------------------------------- */
-        var moderatorController = new ModeratorController(database);
-
         before("/spaces?:spaceId/messages/*", userController.requirePermission("DELETE", "d"));
         delete("/spaces/:spaceId/messages/:msgId", moderatorController::deletePost);
 
