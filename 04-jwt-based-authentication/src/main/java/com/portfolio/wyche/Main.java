@@ -20,6 +20,8 @@ import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Set;
 
+import javax.crypto.SecretKey;
+
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -34,7 +36,7 @@ import com.portfolio.wyche.controller.TokenController;
 import com.portfolio.wyche.controller.UserController;
 import com.portfolio.wyche.filter.CorsFilter;
 import com.portfolio.wyche.token.DatabaseTokenStore;
-import com.portfolio.wyche.token.HmacTokenStore;
+import com.portfolio.wyche.token.EncryptedJwtTokenStore;
 
 import spark.Request;
 import spark.Response;
@@ -62,10 +64,9 @@ public class Main {
         var keyPassword = System.getProperty("keystore.password", "changeit").toCharArray();
         var keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(new FileInputStream("keystore.p12"), keyPassword);
-        var macKey = keyStore.getKey("hmac-key", keyPassword);
-        var encKey = keyStore.getKey("aes-key", keyPassword)
+        var encKey = keyStore.getKey("aes-key", keyPassword);
         var databaseTokenStore = new DatabaseTokenStore(database);
-        var tokenStore = new HmacTokenStore(databaseTokenStore, macKey);
+        var tokenStore = new EncryptedJwtTokenStore((SecretKey) encKey, databaseTokenStore);
         var tokenController = new TokenController(tokenStore);
 
         /* -------------------------------------------------------------------------- */

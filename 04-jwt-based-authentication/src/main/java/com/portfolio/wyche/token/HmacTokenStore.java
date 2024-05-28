@@ -10,7 +10,7 @@ import javax.crypto.Mac;
 
 import spark.Request;
 
-public class HmacTokenStore implements TokenStore {
+public class HmacTokenStore implements SecureTokenStore {
 
   private final TokenStore delegate;
   private final Key macKey;
@@ -18,6 +18,14 @@ public class HmacTokenStore implements TokenStore {
   public HmacTokenStore(TokenStore delegate, Key macKey) {
     this.delegate = delegate;
     this.macKey = macKey;
+  }
+
+  public static SecureTokenStore wrap(ConfidentialTokenStore store, Key macKey) {
+    return new HmacTokenStore(store, macKey);
+  }
+
+  public static AuthenticatedTokenStore wrap(TokenStore store, Key macKey) {
+    return new HmacTokenStore(store, macKey);
   }
 
   @Override
@@ -47,7 +55,8 @@ public class HmacTokenStore implements TokenStore {
     }
 
     var realTokenId = tokenId.substring(0, index);
-    var provided = Base64url.decode(tokenId.substring(index + 1));
+    var tag = tokenId.substring(index+1)
+    var provided = Base64url.decode(tag);
     var computed = hmac(realTokenId);
 
     if (!MessageDigest.isEqual(provided, computed)) {
@@ -65,7 +74,8 @@ public class HmacTokenStore implements TokenStore {
     }
 
     var realTokenId = tokenId.substring(0, index);
-    var provided = Base64url.decode(tokenId.substring(index + 1));
+    var tag = tokenId.substring(index + 1);
+    var provided = Base64url.decode(tag);
     var computed = hmac(realTokenId);
 
     if (!MessageDigest.isEqual(provided, computed)) {
