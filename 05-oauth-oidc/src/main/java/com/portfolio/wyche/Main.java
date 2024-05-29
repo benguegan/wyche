@@ -15,6 +15,7 @@ import static spark.Spark.secure;
 import static spark.Spark.staticFiles;
 
 import java.io.FileInputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
@@ -37,6 +38,8 @@ import com.portfolio.wyche.controller.UserController;
 import com.portfolio.wyche.filter.CorsFilter;
 import com.portfolio.wyche.token.DatabaseTokenStore;
 import com.portfolio.wyche.token.EncryptedJwtTokenStore;
+import com.portfolio.wyche.token.OAuth2TokenStore;
+import com.portfolio.wyche.token.SecureTokenStore;
 
 import spark.Request;
 import spark.Response;
@@ -64,9 +67,11 @@ public class Main {
         var keyPassword = System.getProperty("keystore.password", "changeit").toCharArray();
         var keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(new FileInputStream("keystore.p12"), keyPassword);
-        var encKey = keyStore.getKey("aes-key", keyPassword);
-        var databaseTokenStore = new DatabaseTokenStore(database);
-        var tokenStore = new EncryptedJwtTokenStore((SecretKey) encKey, databaseTokenStore);
+        var encKey = keyStore.getKey("ae-s-key", keyPassword);
+        var clientId = "clientId";
+        var clientSecret = "clientSecret";
+        var introspectionEndpoint = URI.create("https://localhost:8443/oauth2/introspect");
+        SecureTokenStore tokenStore = new OAuth2TokenStore(introspectionEndpoint, clientId, clientSecret);
         var tokenController = new TokenController(tokenStore);
 
         /* -------------------------------------------------------------------------- */
